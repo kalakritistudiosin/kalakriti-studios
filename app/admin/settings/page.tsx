@@ -1,9 +1,9 @@
-import { getSettings } from '@/lib/queries';
+import { getSettingsFresh } from '@/lib/queries';
 import { PageTitle } from '@/components/admin/admin-nav';
 import { SettingsForm } from '@/components/admin/settings-form';
 
 export default async function AdminSettingsPage() {
-  const s = await getSettings();
+  const s = await getSettingsFresh();
   return (
     <>
       <PageTitle title="Settings" text="Business contact details and homepage hero." />

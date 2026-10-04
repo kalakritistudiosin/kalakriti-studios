@@ -2,17 +2,35 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
-import { AnimatePresence, motion } from 'framer-motion';
 import { ChevronLeft, ChevronRight, X, ZoomIn, ZoomOut, Expand } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 type Img = { url: string };
+
+/** Lightweight swipe detection (no animation library). */
+function useSwipe(onLeft: () => void, onRight: () => void, enabled = true) {
+  const start = useRef<{ x: number; y: number } | null>(null);
+  return {
+    onTouchStart: (e: React.TouchEvent) => {
+      if (!enabled) return;
+      start.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+    },
+    onTouchEnd: (e: React.TouchEvent) => {
+      if (!enabled || !start.current) return;
+      const dx = e.changedTouches[0].clientX - start.current.x;
+      const dy = e.changedTouches[0].clientY - start.current.y;
+      start.current = null;
+      if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy)) (dx < 0 ? onLeft : onRight)();
+    },
+  };
+}
 
 export function ProductGallery({ images, name }: { images: Img[]; name: string }) {
   const [index, setIndex] = useState(0);
   const [open, setOpen] = useState(false);
   const count = images.length;
   const go = useCallback((d: number) => setIndex((i) => (i + d + count) % count), [count]);
+  const swipe = useSwipe(() => go(1), () => go(-1), count > 1);
 
   if (!count) {
     return (
@@ -45,19 +63,10 @@ export function ProductGallery({ images, name }: { images: Img[]; name: string }
       )}
 
       <div className="relative flex-1 overflow-hidden rounded-md bg-cream">
-        <motion.div
+        <div
           key={index}
-          className="relative aspect-[4/5] cursor-zoom-in touch-pan-y"
-          drag={count > 1 ? 'x' : false}
-          dragConstraints={{ left: 0, right: 0 }}
-          dragElastic={0.25}
-          onDragEnd={(_, info) => {
-            if (info.offset.x < -60) go(1);
-            else if (info.offset.x > 60) go(-1);
-          }}
-          initial={{ opacity: 0.4 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.35 }}
+          className="relative aspect-[4/5] cursor-zoom-in touch-pan-y animate-in fade-in duration-300"
+          {...swipe}
           onClick={() => setOpen(true)}
           data-testid="gallery-main"
         >
@@ -70,7 +79,7 @@ export function ProductGallery({ images, name }: { images: Img[]; name: string }
             sizes="(min-width:1024px) 50vw, 100vw"
             className="pointer-events-none select-none object-cover"
           />
-        </motion.div>
+        </div>
 
         {count > 1 && (
           <>
@@ -90,7 +99,7 @@ export function ProductGallery({ images, name }: { images: Img[]; name: string }
         </button>
       </div>
 
-      <AnimatePresence>{open && <Lightbox images={images} index={index} setIndex={setIndex} go={go} name={name} onClose={() => setOpen(false)} />}</AnimatePresence>
+      {open && <Lightbox images={images} index={index} setIndex={setIndex} go={go} name={name} onClose={() => setOpen(false)} />}
     </div>
   );
 }
@@ -114,6 +123,7 @@ function Lightbox({
   const [origin, setOrigin] = useState('50% 50%');
   const ref = useRef<HTMLDivElement>(null);
   const count = images.length;
+  const swipe = useSwipe(() => go(1), () => go(-1), !zoom && count > 1);
 
   useEffect(() => {
     const prev = document.body.style.overflow;
@@ -139,11 +149,8 @@ function Lightbox({
   };
 
   return (
-    <motion.div
-      className="fixed inset-0 z-[100] flex flex-col bg-[#1c1a18]/[0.97] text-ivory"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
+    <div
+      className="fixed inset-0 z-[100] flex flex-col bg-[#1c1a18]/[0.97] text-ivory animate-in fade-in duration-200"
       role="dialog"
       aria-modal="true"
       aria-label={`${name} image viewer`}
@@ -164,29 +171,21 @@ function Lightbox({
       </div>
 
       <div className="relative flex-1 overflow-hidden" ref={ref}>
-        <motion.div
+        <div
           key={index}
-          className={cn('absolute inset-0', zoom ? 'cursor-zoom-out' : 'cursor-zoom-in')}
-          drag={!zoom && count > 1 ? 'x' : false}
-          dragConstraints={{ left: 0, right: 0 }}
-          dragElastic={0.3}
-          onDragEnd={(_, info) => {
-            if (info.offset.x < -60) go(1);
-            else if (info.offset.x > 60) go(-1);
-          }}
+          className={cn('absolute inset-0 animate-in fade-in duration-200', zoom ? 'cursor-zoom-out' : 'cursor-zoom-in')}
+          {...swipe}
           onClick={(e) => {
             setOriginFromEvent(e.clientX, e.clientY);
             setZoom((z) => !z);
           }}
           onMouseMove={(e) => zoom && setOriginFromEvent(e.clientX, e.clientY)}
           onTouchMove={(e) => zoom && setOriginFromEvent(e.touches[0].clientX, e.touches[0].clientY)}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
         >
           <div className="absolute inset-0 transition-transform duration-300 ease-out" style={{ transform: zoom ? 'scale(2.2)' : 'scale(1)', transformOrigin: origin }}>
             <Image src={images[index].url} alt={`${name} — image ${index + 1}`} fill sizes="100vw" quality={90} draggable={false} className="pointer-events-none select-none object-contain" />
           </div>
-        </motion.div>
+        </div>
         {count > 1 && !zoom && (
           <>
             <button type="button" onClick={() => go(-1)} aria-label="Previous image" data-testid="lightbox-prev" className="absolute left-2 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-white/10 hover:bg-white/20 sm:left-6">
@@ -208,6 +207,6 @@ function Lightbox({
           ))}
         </div>
       )}
-    </motion.div>
+    </div>
   );
 }

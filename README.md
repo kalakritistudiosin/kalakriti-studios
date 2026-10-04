@@ -5,8 +5,8 @@ Premium handmade art & gifting website — **Next.js 15 (App Router) · TypeScri
 Deploy **once**. After that, everything (products, prices, images, stock, featured, categories, tags, WhatsApp, Instagram, email, homepage hero) is managed from `/admin` and customers see changes on refresh — no code edits, no Git push, no redeploy.
 
 ## How "live without redeploy" works
-- Public pages are rendered on every request (`dynamic = 'force-dynamic'`) straight from PostgreSQL.
-- Every admin write also calls `revalidatePath('/', 'layout')`.
+- Public catalogue data is cached in the Next.js Data Cache under the `catalog` tag (Netlify persists it) for fast repeat visits.
+- Every admin write calls `revalidateTag('catalog')` + `revalidatePath('/', 'layout')`, so customers see changes on the next refresh.
 - Images are uploaded **directly from the admin's browser to Cloudinary** using a short-lived server signature (admin-only), then optimised by Cloudinary (`f_auto,q_auto,w_*`) through a global `next/image` loader.
 
 ## Security
@@ -29,7 +29,7 @@ yarn dev
 1. Push this repo to GitHub and **Add new site → Import from Git** in Netlify.
 2. Build settings are read from `netlify.toml` (`yarn netlify:build`, publish `.next`, Node 20). Netlify's Next.js runtime is used automatically.
 3. In **Site configuration → Environment variables**, add every variable from `.env.example`:
-   `DATABASE_URL`, `DIRECT_URL`, `AUTH_SECRET`, `AUTH_TRUST_HOST=true`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `ADMIN_EMAIL`, `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET` (optionally `SITE_URL`).
+   `DATABASE_URL`, `DIRECT_URL`, `AUTH_SECRET`, `AUTH_TRUST_HOST=true`, `AUTH_URL` (your public site URL), `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `ADMIN_EMAIL`, `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET` (optionally `SITE_URL`).
 4. In Google Cloud Console → your OAuth client → **Authorised redirect URIs**, add
    `https://YOUR-SITE.netlify.app/api/auth/callback/google` (and your custom domain if any).
 5. Deploy. The build runs `prisma migrate deploy` + the idempotent seed, then `next build`.

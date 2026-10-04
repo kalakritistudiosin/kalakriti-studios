@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { settingsSchema } from '@/lib/validators';
 import { requireAdmin, handleError, revalidateSite } from '@/lib/authz';
-import { getSettings } from '@/lib/queries';
+import { getSettingsFresh } from '@/lib/queries';
 import { destroyImages } from '@/lib/cloudinary';
 
 export const dynamic = 'force-dynamic';
@@ -10,7 +10,7 @@ export const dynamic = 'force-dynamic';
 export async function GET() {
   const g = await requireAdmin();
   if (!g.ok) return g.response;
-  return NextResponse.json({ settings: await getSettings() });
+  return NextResponse.json({ settings: await getSettingsFresh() });
 }
 
 export async function PUT(req: Request) {
@@ -18,7 +18,7 @@ export async function PUT(req: Request) {
   if (!g.ok) return g.response;
   try {
     const d = settingsSchema.parse(await req.json());
-    const old = await getSettings();
+    const old = await getSettingsFresh();
     const settings = await prisma.settings.update({
       where: { id: 'default' },
       data: { ...d, heroImagePublicId: d.heroImagePublicId || null },

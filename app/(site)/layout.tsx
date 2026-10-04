@@ -1,8 +1,7 @@
 import { Header } from '@/components/site/header';
 import { Footer } from '@/components/site/footer';
 
-// Always render with the latest database content (admin changes show on refresh, no redeploy).
-export const dynamic = 'force-dynamic';
+// Catalogue data is served from the tagged Data Cache and invalidated on every admin change (see lib/queries.ts).
 
 export default function SiteLayout({ children }: { children: React.ReactNode }) {
   return (

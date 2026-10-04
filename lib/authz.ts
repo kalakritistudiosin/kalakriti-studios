@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
-import { revalidatePath } from 'next/cache';
+import { revalidatePath, revalidateTag } from 'next/cache';
+import { CATALOG_TAG } from '@/lib/queries';
 import { ZodError } from 'zod';
 import { Prisma } from '@prisma/client';
 import { auth } from '@/lib/auth';
@@ -56,6 +57,7 @@ export function handleError(e: unknown) {
 /** Make every admin change visible to customers immediately. */
 export function revalidateSite() {
   try {
+    revalidateTag(CATALOG_TAG); // targeted: invalidates only cached public catalogue data
     revalidatePath('/', 'layout');
   } catch {
     /* ignore */

@@ -2,7 +2,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { AlertTriangle, Package, Star, PackageX, Users, Plus } from 'lucide-react';
 import { prisma } from '@/lib/prisma';
-import { getSettings } from '@/lib/queries';
+import { getSettingsFresh } from '@/lib/queries';
 import { formatINR } from '@/lib/format';
 import { PageTitle } from '@/components/admin/admin-nav';
 import { StockBadge } from '@/components/site/stock-badge';
@@ -14,7 +14,7 @@ export default async function AdminDashboard() {
     prisma.product.count({ where: { stockStatus: 'OUT_OF_STOCK' } }),
     prisma.user.count({ where: { role: 'CUSTOMER' } }),
     prisma.product.findMany({ orderBy: { updatedAt: 'desc' }, take: 6, include: { images: { orderBy: { sortOrder: 'asc' }, take: 1 } } }),
-    getSettings(),
+    getSettingsFresh(),
   ]);
   const stats = [
     { label: 'Total Products', value: total, icon: Package, href: '/admin/products' },

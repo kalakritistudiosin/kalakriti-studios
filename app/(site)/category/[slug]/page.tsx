@@ -2,8 +2,7 @@ import type { Metadata } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { prisma } from '@/lib/prisma';
-import { searchProducts, getAllTags, getSettings } from '@/lib/queries';
+import { searchProducts, getAllTags, getSettings, getCategoryBySlug } from '@/lib/queries';
 import { cld } from '@/lib/format';
 import { ProductGrid, EmptyState, Pagination } from '@/components/site/product-grid';
 import { ShopToolbar } from '@/components/site/shop-toolbar';
@@ -11,7 +10,7 @@ import { ShopToolbar } from '@/components/site/shop-toolbar';
 type P = Promise<{ slug: string }>;
 type SP = Promise<Record<string, string | undefined>>;
 
-const getCategory = (slug: string) => prisma.category.findFirst({ where: { slug, isPublished: true } });
+const getCategory = getCategoryBySlug;
 
 export async function generateMetadata({ params }: { params: P }): Promise<Metadata> {
   const { slug } = await params;
@@ -27,13 +26,13 @@ export async function generateMetadata({ params }: { params: P }): Promise<Metad
 
 export default async function CategoryPage({ params, searchParams }: { params: P; searchParams: SP }) {
   const [{ slug }, sp] = await Promise.all([params, searchParams]);
-  const category = await getCategory(slug);
-  if (!category) notFound();
-  const [result, tags, settings] = await Promise.all([
+  const [category, result, tags, settings] = await Promise.all([
+    getCategory(slug),
     searchProducts({ ...sp, category: slug, pageSize: 12 }),
     getAllTags(),
     getSettings(),
   ]);
+  if (!category) notFound();
   const makeHref = (p: number) => {
     const n = new URLSearchParams(Object.entries(sp).filter(([, v]) => v) as [string, string][]);
     n.set('page', String(p));

@@ -4,8 +4,8 @@ import { Toaster } from '@/components/ui/sonner';
 import { getBaseUrl, BRAND } from '@/lib/site';
 import './globals.css';
 
-const serif = Cormorant_Garamond({ subsets: ['latin'], weight: ['400', '500', '600', '700'], variable: '--font-serif', display: 'swap' });
-const sans = Jost({ subsets: ['latin'], weight: ['300', '400', '500', '600'], variable: '--font-sans', display: 'swap' });
+const serif = Cormorant_Garamond({ subsets: ['latin'], weight: ['400', '500', '600'], variable: '--font-serif', display: 'swap' });
+const sans = Jost({ subsets: ['latin'], weight: ['400', '500', '600'], variable: '--font-sans', display: 'swap' });
 
 export async function generateMetadata(): Promise<Metadata> {
   const base = await getBaseUrl();

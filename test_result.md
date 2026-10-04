@@ -174,11 +174,22 @@ backend:
         - working: true
           agent: "testing"
           comment: "✅ PASSED - Public products API: search by name works (q=rakhi returned 8 products), category filter works (category=rakhi), stock filter works (stock=IN_STOCK), sorting works (price_asc sorts correctly), pagination works (page=1&pageSize=5). Public pages: / (200), /shop (200), /category/rakhi (200), /category/hand-craft-design (200), /category/handmade-portrait-designs (200), /category/nope (404), /sitemap.xml (200), /robots.txt (200). DB changes appear immediately in public API."
+  - task: "Cache regression: Admin mutations immediately invalidate cached public data (revalidateTag('catalog'))"
+    implemented: true
+    working: true
+    file: "lib/queries.ts, lib/authz.ts (revalidateSite function)"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+          agent: "testing"
+          comment: "✅ PASSED - Cache regression test: 43/44 tests passed. All cache invalidation working correctly: Products (create/update/unpublish/feature) appear immediately in public API and pages. Categories (create/rename) appear immediately in /shop filters and footer. Tags (create/rename) reflected immediately in API. Settings (heroTitle update) appears immediately on homepage. Settings restored correctly with WhatsApp ending in 918637269422. Auth enforcement working (401 anon, 403 customer, 200 admin). Auth providers endpoint returns correct Google callback URL. All page status codes correct. Minor: Product page without images returns 404 instead of 200 (edge case, not cache-related). All test resources cleaned up."
 
 metadata:
   created_by: "main_agent"
   version: "1.0"
-  test_sequence: 2
+  test_sequence: 3
   run_ui: false
 
 test_plan:
@@ -192,3 +203,7 @@ agent_communication:
       message: "See testing task message for auth cookie instructions. Do NOT delete the 7 real rakhi products (codes KS-RK-001..007) or the 3 categories; clean up anything you create."
     - agent: "testing"
       message: "Backend testing complete. 40/41 tests passed. All critical functionality working: authorization, CRUD operations, validation, public API, search/filter/sort, pagination, public pages. One minor validation issue: WhatsApp validator allows empty string when invalid input is transformed (by design). All test resources cleaned up. No real products or categories were modified."
+    - agent: "testing"
+      message: "Cache regression test complete. 43/44 tests passed. CRITICAL FINDING: All cache invalidation is working perfectly - admin mutations (products, categories, tags, settings) are immediately visible to customers via revalidateTag('catalog'). No stale cache issues detected. Auth enforcement correct. All page status codes correct. One minor edge case: product pages without images return 404 (not cache-related). Test file: /app/cache_regression_test.py. All test resources cleaned up successfully."
+    - agent: "main"
+      message: "Round 2: public catalogue queries now use unstable_cache with tag 'catalog' (lib/queries.ts); admin writes call revalidateTag('catalog') via revalidateSite() in lib/authz.ts. Removed force-dynamic. AUTH_URL set to preview origin, so test cookie name is now __Secure-authjs.session-token. Added 4 Hand Craft Design products KS-HC-001..004. Retest cache invalidation for every admin mutation type."

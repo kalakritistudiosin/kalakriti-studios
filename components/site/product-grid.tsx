@@ -2,11 +2,11 @@ import Link from 'next/link';
 import { ProductCard } from './product-card';
 import type { ProductCardData } from '@/lib/queries';
 
-export function ProductGrid({ products, whatsapp }: { products: (ProductCardData & { _count?: { images: number } })[]; whatsapp: string }) {
+export function ProductGrid({ products, whatsapp, eager = true }: { products: (ProductCardData & { _count?: { images: number } })[]; whatsapp: string; eager?: boolean }) {
   return (
     <div className="grid grid-cols-2 gap-x-3 gap-y-10 sm:gap-x-5 lg:grid-cols-3 xl:grid-cols-4" data-testid="product-grid">
       {products.map((p, i) => (
-        <ProductCard key={p.id} product={p} whatsapp={whatsapp} priority={i < 2} />
+        <ProductCard key={p.id} product={p} whatsapp={whatsapp} priority={eager && i < 2} />
       ))}
     </div>
   );

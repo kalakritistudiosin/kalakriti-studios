@@ -33,7 +33,7 @@ export default async function ProductPage({ params }: { params: P }) {
   const { slug } = await params;
   const product = await getProductBySlug(slug);
   if (!product) notFound();
-  const [settings, related, base] = await Promise.all([getSettings(), getRelatedProducts(product.id, product.categoryId), getBaseUrl()]);
+  const [settings, related, base] = await Promise.all([getSettings(), getRelatedProducts(product.id, product.categoryId, 4), getBaseUrl()]);
   const out = product.stockStatus === 'OUT_OF_STOCK';
   const wa = whatsappOrderLink(settings.whatsappNumber, product);
   const custom = product.isCustomizable ? whatsappCustomizeLink(settings.whatsappNumber, product) : null;

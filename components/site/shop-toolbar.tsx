@@ -2,8 +2,25 @@
 
 import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import { useState, useTransition } from 'react';
-import { Search, SlidersHorizontal, Loader2, X } from 'lucide-react';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Search, SlidersHorizontal, Loader2, X, ChevronDown } from 'lucide-react';
+
+/** Native <select> styled like the design system (lighter JS, best UX on mobile). */
+function NativeSelect({ value, onChange, className, testId, label, children }: { value: string; onChange: (v: string) => void; className?: string; testId?: string; label: string; children: React.ReactNode }) {
+  return (
+    <span className={`relative inline-flex ${className ?? ''}`}>
+      <select
+        aria-label={label}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        data-testid={testId}
+        className="h-full w-full cursor-pointer appearance-none rounded-md border border-input bg-white pl-3 pr-9 text-sm text-charcoal outline-none focus:border-maroon"
+      >
+        {children}
+      </select>
+      <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 opacity-50" />
+    </span>
+  );
+}
 
 type Opt = { slug: string; name: string };
 
@@ -25,7 +42,7 @@ export function ShopToolbar({ categories, tags, hideCategory = false, total }: {
   };
 
   const active = ['q', 'category', 'stock', 'tag', 'min', 'max'].filter((k) => sp.get(k)).length;
-  const sel = 'h-10 w-full bg-white sm:w-[170px]';
+  const sel = 'h-10 w-full sm:w-[170px]';
 
   return (
     <div className="space-y-4" data-testid="shop-toolbar">
@@ -47,48 +64,34 @@ export function ShopToolbar({ categories, tags, hideCategory = false, total }: {
           <button type="button" onClick={() => setOpen((o) => !o)} data-testid="filters-toggle" className="inline-flex h-11 flex-1 items-center justify-center gap-2 rounded-md border bg-white px-4 text-sm hover:border-maroon sm:flex-none">
             <SlidersHorizontal className="h-4 w-4" /> Filters {active > 0 && <span className="rounded-full bg-maroon px-1.5 text-[10px] text-ivory">{active}</span>}
           </button>
-          <Select value={sp.get('sort') || 'featured'} onValueChange={(v: string) => update({ sort: v === 'featured' ? '' : v })}>
-            <SelectTrigger className="h-11 flex-1 bg-white sm:w-[190px] sm:flex-none" data-testid="sort-select">
-              <SelectValue placeholder="Sort" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="featured">Featured</SelectItem>
-              <SelectItem value="latest">Latest</SelectItem>
-              <SelectItem value="price_asc">Price: Low → High</SelectItem>
-              <SelectItem value="price_desc">Price: High → Low</SelectItem>
-            </SelectContent>
-          </Select>
+          <NativeSelect label="Sort" value={sp.get('sort') || 'featured'} onChange={(v) => update({ sort: v === 'featured' ? '' : v })} className="h-11 flex-1 sm:w-[190px] sm:flex-none" testId="sort-select">
+            <option value="featured">Featured</option>
+            <option value="latest">Latest</option>
+            <option value="price_asc">Price: Low → High</option>
+            <option value="price_desc">Price: High → Low</option>
+          </NativeSelect>
         </div>
       </div>
 
       {open && (
         <div className="grid gap-3 rounded-md border bg-cream/40 p-4 sm:flex sm:flex-wrap sm:items-end" data-testid="filters-panel">
           {!hideCategory && (
-            <Select value={sp.get('category') || 'all'} onValueChange={(v: string) => update({ category: v })}>
-              <SelectTrigger className={sel} data-testid="filter-category"><SelectValue placeholder="Category" /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All categories</SelectItem>
-                {categories.map((c) => <SelectItem key={c.slug} value={c.slug}>{c.name}</SelectItem>)}
-              </SelectContent>
-            </Select>
+            <NativeSelect label="Category" value={sp.get('category') || 'all'} onChange={(v) => update({ category: v })} className={sel} testId="filter-category">
+              <option value="all">All categories</option>
+              {categories.map((c) => <option key={c.slug} value={c.slug}>{c.name}</option>)}
+            </NativeSelect>
           )}
-          <Select value={sp.get('stock') || 'all'} onValueChange={(v: string) => update({ stock: v })}>
-            <SelectTrigger className={sel} data-testid="filter-stock"><SelectValue placeholder="Availability" /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Any availability</SelectItem>
-              <SelectItem value="IN_STOCK">In Stock</SelectItem>
-              <SelectItem value="LIMITED_STOCK">Limited Stock</SelectItem>
-              <SelectItem value="OUT_OF_STOCK">Out Of Stock</SelectItem>
-            </SelectContent>
-          </Select>
+          <NativeSelect label="Availability" value={sp.get('stock') || 'all'} onChange={(v) => update({ stock: v })} className={sel} testId="filter-stock">
+            <option value="all">Any availability</option>
+            <option value="IN_STOCK">In Stock</option>
+            <option value="LIMITED_STOCK">Limited Stock</option>
+            <option value="OUT_OF_STOCK">Out Of Stock</option>
+          </NativeSelect>
           {tags.length > 0 && (
-            <Select value={sp.get('tag') || 'all'} onValueChange={(v: string) => update({ tag: v })}>
-              <SelectTrigger className={sel} data-testid="filter-tag"><SelectValue placeholder="Tag" /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All tags</SelectItem>
-                {tags.map((t) => <SelectItem key={t.slug} value={t.slug}>{t.name}</SelectItem>)}
-              </SelectContent>
-            </Select>
+            <NativeSelect label="Tag" value={sp.get('tag') || 'all'} onChange={(v) => update({ tag: v })} className={sel} testId="filter-tag">
+              <option value="all">All tags</option>
+              {tags.map((t) => <option key={t.slug} value={t.slug}>{t.name}</option>)}
+            </NativeSelect>
           )}
           <form
             className="flex items-center gap-2"

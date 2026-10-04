@@ -1,6 +1,18 @@
 import { cache } from 'react';
+import { unstable_cache } from 'next/cache';
 import { Prisma, type StockStatus } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
+
+/**
+ * Public catalogue data is cached in the Next.js Data Cache (Netlify: persisted via Netlify Blobs)
+ * under one tag. Every admin write calls revalidateTag(CATALOG_TAG), so customers see changes on the
+ * next refresh — no redeploy. The 10-minute TTL is only a safety net for direct DB edits.
+ */
+export const CATALOG_TAG = 'catalog';
+const TTL = 600;
+function cached<A extends unknown[], R>(fn: (...args: A) => Promise<R>, key: string) {
+  return unstable_cache(fn, [key], { tags: [CATALOG_TAG], revalidate: TTL });
+}
 
 export const productCardSelect = {
   id: true,
@@ -20,35 +32,54 @@ export const productCardSelect = {
 
 export type ProductCardData = Prisma.ProductGetPayload<{ select: typeof productCardSelect }>;
 
-export const getSettings = cache(async () => {
+export const getSettings = cache(
+  cached(async () => {
+    const s = await prisma.settings.findUnique({ where: { id: 'default' } });
+    return s ?? (await prisma.settings.create({ data: { id: 'default' } }));
+  }, 'settings')
+);
+
+/** Uncached settings for admin forms/APIs. */
+export async function getSettingsFresh() {
   const s = await prisma.settings.findUnique({ where: { id: 'default' } });
   return s ?? (await prisma.settings.create({ data: { id: 'default' } }));
-});
+}
 
-export const getNavCategories = cache(() =>
-  prisma.category.findMany({
-    where: { isPublished: true },
-    orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }],
-    select: { id: true, name: true, slug: true, imageUrl: true, description: true },
-  })
+export const getNavCategories = cache(
+  cached(
+    () =>
+      prisma.category.findMany({
+        where: { isPublished: true },
+        orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }],
+        select: { id: true, name: true, slug: true, imageUrl: true, description: true },
+      }),
+    'nav-categories'
+  )
 );
 
-export const getAllTags = cache(() =>
-  prisma.tag.findMany({
-    where: { products: { some: { product: { isPublished: true } } } },
-    orderBy: { name: 'asc' },
-    select: { id: true, name: true, slug: true },
-  })
+export const getCategoryBySlug = cache(
+  cached((slug: string) => prisma.category.findFirst({ where: { slug, isPublished: true } }), 'category-by-slug')
 );
 
-export function getFeaturedProducts(limit = 8) {
-  return prisma.product.findMany({
+export const getAllTags = cache(
+  cached(
+    () =>
+      prisma.tag.findMany({
+        where: { products: { some: { product: { isPublished: true } } } },
+        orderBy: { name: 'asc' },
+        select: { id: true, name: true, slug: true },
+      }),
+    'all-tags'
+  )
+);
+
+export const getFeaturedProducts = cached((limit: number = 8) =>
+  prisma.product.findMany({
     where: { isPublished: true, isFeatured: true },
     orderBy: { updatedAt: 'desc' },
     take: limit,
     select: productCardSelect,
-  });
-}
+  }), 'featured');
 
 export function getCategoryCollections(perCategory = 4) {
   return prisma.category.findMany({
@@ -84,7 +115,9 @@ export type ProductQuery = {
 
 const STOCK_VALUES = ['IN_STOCK', 'LIMITED_STOCK', 'OUT_OF_STOCK'];
 
-export async function searchProducts(params: ProductQuery) {
+export const searchProducts = cached(searchProductsRaw, 'search');
+
+async function searchProductsRaw(params: ProductQuery) {
   const pageSize = Math.min(Math.max(params.pageSize || 12, 1), 48);
   const page = Math.max(parseInt(String(params.page || '1'), 10) || 1, 1);
   const q = (params.q || '').trim().slice(0, 80);
@@ -129,7 +162,8 @@ export async function searchProducts(params: ProductQuery) {
   return { items, total, page, pageSize, pageCount: Math.max(Math.ceil(total / pageSize), 1), sort };
 }
 
-export const getProductBySlug = cache((slug: string) =>
+export const getProductBySlug = cache(
+  cached((slug: string) =>
   prisma.product.findFirst({
     where: { slug, isPublished: true },
     include: {
@@ -137,10 +171,12 @@ export const getProductBySlug = cache((slug: string) =>
       category: { select: { id: true, name: true, slug: true } },
       tags: { include: { tag: true } },
     },
-  })
+  }), 'product-by-slug')
 );
 
-export async function getRelatedProducts(productId: string, categoryId: string | null, limit = 4) {
+export const getRelatedProducts = cached(getRelatedRaw, 'related');
+
+async function getRelatedRaw(productId: string, categoryId: string | null, limit: number = 4) {
   const related = await prisma.product.findMany({
     where: { isPublished: true, id: { not: productId }, ...(categoryId ? { categoryId } : {}) },
     orderBy: [{ isFeatured: 'desc' }, { createdAt: 'desc' }],
