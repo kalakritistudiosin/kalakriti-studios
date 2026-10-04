@@ -30,6 +30,9 @@ yarn dev
 2. Build settings are read from `netlify.toml` (`yarn netlify:build`, publish `.next`, Node 20). Netlify's Next.js runtime is used automatically.
 3. In **Site configuration → Environment variables**, add every variable from `.env.example`:
    `DATABASE_URL`, `DIRECT_URL`, `AUTH_SECRET`, `AUTH_TRUST_HOST=true`, `AUTH_URL` (your public site URL), `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `ADMIN_EMAIL`, `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET` (optionally `SITE_URL`).
+   Set `DIRECT_URL` to your database provider's direct (non-pooled) connection string and include the **Builds** scope for each deploy context you use. `DATABASE_URL` needs both **Builds** and **Functions** scopes because it is used during the build and by the running application.
+   Netlify supplies these variables from the site settings automatically. Do not add empty `DATABASE_URL` or `DIRECT_URL` entries to `netlify.toml`: file-based values override the site settings. Keep database credentials out of the repository. After changing the variables, retry the failed deploy.
+   The Netlify build preserves an explicit `DIRECT_URL`. When it is missing in a deploy context, the build derives a direct connection from an existing Neon `DATABASE_URL` by removing the hostname's `-pooler` suffix and the `pgbouncer` parameter. The runtime connection stays unchanged. Other database providers still require an explicit `DIRECT_URL`.
 4. In Google Cloud Console → your OAuth client → **Authorised redirect URIs**, add
    `https://YOUR-SITE.netlify.app/api/auth/callback/google` (and your custom domain if any).
 5. Deploy. The build runs `prisma migrate deploy` + the idempotent seed, then `next build`.
