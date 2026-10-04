@@ -1,5 +1,7 @@
 # Kalakriti Studios
 
+[![Netlify Status](https://api.netlify.com/api/v1/badges/c8dd5fcb-9bb8-4442-adfe-935e11948732/deploy-status)](https://app.netlify.com/projects/kalakritistudios/deploys)
+
 Premium handmade art & gifting website — **Next.js 15 (App Router) · TypeScript · Tailwind + shadcn/ui · Framer Motion · Neon PostgreSQL + Prisma · Auth.js (Google) · Cloudinary · Netlify**.
 
 Deploy **once**. After that, everything (products, prices, images, stock, featured, categories, tags, WhatsApp, Instagram, email, homepage hero) is managed from `/admin` and customers see changes on refresh — no code edits, no Git push, no redeploy.
