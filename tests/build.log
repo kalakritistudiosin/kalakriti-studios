@@ -1,0 +1,55 @@
+   ▲ Next.js 15.5.26
+   - Environments: .env
+
+   Creating an optimized production build ...
+ ✓ Compiled successfully in 4.7s
+   Linting and checking validity of types ...
+   Collecting page data ...
+   Generating static pages (0/9) ...
+   Generating static pages (2/9) 
+   Generating static pages (4/9) 
+   Generating static pages (6/9) 
+ ✓ Generating static pages (9/9)
+   Finalizing page optimization ...
+   Collecting build traces ...
+
+Route (app)                                 Size  First Load JS
+┌ ƒ /                                    1.79 kB         130 kB
+├ ○ /_not-found                            174 B         103 kB
+├ ƒ /account                             1.72 kB         110 kB
+├ ƒ /admin                               2.66 kB         124 kB
+├ ƒ /admin/categories                    6.24 kB         154 kB
+├ ƒ /admin/customers                     2.39 kB         119 kB
+├ ƒ /admin/products                      5.43 kB         166 kB
+├ ƒ /admin/products/[id]                   150 B         170 kB
+├ ƒ /admin/products/new                    149 B         170 kB
+├ ƒ /admin/settings                      4.84 kB         140 kB
+├ ƒ /admin/tags                          4.34 kB         130 kB
+├ ƒ /api/account                           174 B         103 kB
+├ ƒ /api/admin/categories                  174 B         103 kB
+├ ƒ /api/admin/categories/[id]             174 B         103 kB
+├ ƒ /api/admin/products                    174 B         103 kB
+├ ƒ /api/admin/products/[id]               174 B         103 kB
+├ ƒ /api/admin/settings                    174 B         103 kB
+├ ƒ /api/admin/tags                        174 B         103 kB
+├ ƒ /api/admin/tags/[id]                   174 B         103 kB
+├ ƒ /api/admin/upload-signature            174 B         103 kB
+├ ƒ /api/auth/[...nextauth]                174 B         103 kB
+├ ƒ /api/health                            174 B         103 kB
+├ ƒ /api/products                          174 B         103 kB
+├ ƒ /category/[slug]                       140 B         132 kB
+├ ○ /icon.jpg                                0 B            0 B
+├ ƒ /login                                1.7 kB         107 kB
+├ ƒ /products/[slug]                      4.3 kB         133 kB
+├ ƒ /robots.txt                            174 B         103 kB
+├ ƒ /shop                                  140 B         132 kB
+└ ƒ /sitemap.xml                           174 B         103 kB
++ First Load JS shared by all             103 kB
+  ├ chunks/1255-0f12d1d68e0b5948.js      46.4 kB
+  ├ chunks/4bd1b696-f785427dddbba9fb.js  54.2 kB
+  └ other shared chunks (total)          1.94 kB
+
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+
