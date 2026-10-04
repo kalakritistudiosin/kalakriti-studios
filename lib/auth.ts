@@ -9,7 +9,42 @@ export const adminEmail = () =>
 // ADMIN role is assigned only when the Google email matches ADMIN_EMAIL.
 export const { handlers, auth, signIn, signOut } = NextAuth({
   trustHost: true,
+
+  // Temporary debugging — helps expose the actual Google OAuth error
+  // hidden behind Auth.js CallbackRouteError.
   debug: true,
+
+  logger: {
+    error(error) {
+      console.error('[AUTH-RAW-ERROR]', error);
+
+      try {
+        console.error(
+          '[AUTH-RAW-CAUSE]',
+          error?.cause
+        );
+
+        console.error(
+          '[AUTH-RAW-CAUSE-DETAIL]',
+          JSON.stringify(
+            error?.cause,
+            Object.getOwnPropertyNames(error?.cause || {})
+          )
+        );
+      } catch (loggingError) {
+        console.error(
+          '[AUTH-RAW-CAUSE-FALLBACK]',
+          error?.cause
+        );
+
+        console.error(
+          '[AUTH-LOGGER-ERROR]',
+          loggingError
+        );
+      }
+    },
+  },
+
   secret: process.env.AUTH_SECRET,
 
   session: {
@@ -35,27 +70,40 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         return false;
       }
 
-      const email = String(profile?.email || '').toLowerCase();
+      const email = String(profile?.email || '')
+        .trim()
+        .toLowerCase();
 
       if (!email || profile?.email_verified === false) {
         return false;
       }
 
-      const role = email === adminEmail() ? 'ADMIN' : 'CUSTOMER';
+      const role =
+        email === adminEmail()
+          ? 'ADMIN'
+          : 'CUSTOMER';
 
       try {
         await prisma.user.upsert({
           where: {
             email,
           },
+
           update: {
-            image: (profile?.picture as string) || undefined,
+            image:
+              (profile?.picture as string) ||
+              undefined,
             role,
           },
+
           create: {
             email,
-            name: (profile?.name as string) || email.split('@')[0],
-            image: (profile?.picture as string) || null,
+            name:
+              (profile?.name as string) ||
+              email.split('@')[0],
+            image:
+              (profile?.picture as string) ||
+              null,
             role,
           },
         });
@@ -88,9 +136,12 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
     async session({ session, token }) {
       if (session.user) {
-        session.user.id = (token.uid as string) || '';
+        session.user.id =
+          (token.uid as string) || '';
+
         session.user.role =
-          (token.role as 'ADMIN' | 'CUSTOMER') || 'CUSTOMER';
+          (token.role as 'ADMIN' | 'CUSTOMER') ||
+          'CUSTOMER';
       }
 
       return session;
