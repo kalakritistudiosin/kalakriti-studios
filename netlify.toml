@@ -1,0 +1,17 @@
+# Netlify configuration for Kalakriti Studios (Next.js App Router + Prisma + Neon PostgreSQL)
+# Netlify automatically uses its Next.js runtime (@netlify/plugin-nextjs / OpenNext adapter).
+
+[build]
+  command = "yarn netlify:build"
+  publish = ".next"
+
+[build.environment]
+  NODE_VERSION = "20"
+  NEXT_TELEMETRY_DISABLED = "1"
+
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
+
+# Prisma query engine must be bundled with the server functions
+[functions]
+  included_files = ["node_modules/.prisma/client/**", "node_modules/@prisma/client/**"]
